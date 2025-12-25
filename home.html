@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Speedtest Server List</title>
+    <style>
+        /* [Mantendo todo o CSS anterior de Cores, Dark Mode e Mobile] */
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #222222;
+            --text-secondary: #666666;
+            --border-color: #eeeeee;
+            --input-bg: #ffffff;
+            --navbar-bg: #d9534f;
+            --navbar-text: #ffffff;
+            --footer-bg: #ffffff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --card-bg: #1e1e1e;
+                --text-main: #e0e0e0;
+                --text-secondary: #aaaaaa;
+                --border-color: #333333;
+                --input-bg: #2d2d2d;
+                --footer-bg: #181818;
+            }
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            margin: 0; background: var(--bg-color); color: var(--text-main);
+            min-height: 100vh; display: flex; flex-direction: column;
+        }
+        
+        #modalPrivacidade {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 9999;
+            display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-content { background: var(--card-bg); padding: 25px; border-radius: 15px; max-width: 450px; text-align: center; width: 100%; }
+
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: var(--navbar-bg); color: var(--navbar-text); padding: 10px 20px; position: sticky; top: 0; z-index: 900; }
+        .btn-favs { background: #c9302c; padding: 8px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; font-size: 0.9rem; }
+        
+        .dropdown { position: relative; }
+        .dropdown-content { 
+            display: none; position: absolute; right: 0; 
+            background-color: var(--card-bg); min-width: 280px; 
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.4); z-index: 1000; 
+            border-radius: 12px; padding: 10px; max-height: 70vh; overflow-y: auto; 
+        }
+        .dropdown:hover .dropdown-content { display: block; }
+
+        .main-content { max-width: 700px; margin: 20px auto; padding: 0 15px; flex: 1; width: 100%; box-sizing: border-box; }
+        input { width: 100%; padding: 16px 20px; border-radius: 30px; border: 1px solid var(--border-color); font-size: 16px; background: var(--input-bg); color: var(--text-main); outline: none; box-sizing: border-box; }
+
+        .results { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+        .item { padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: row; justify-content: space-between; align-items: center; }
+        
+        @media (max-width: 600px) {
+            .item { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .action-area { width: 100%; align-items: flex-start !important; border-top: 1px solid var(--border-color); padding-top: 10px; }
+        }
+
+        .server-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
+        .server-id { color: var(--text-secondary); font-size: 10px; font-weight: bold; background: var(--bg-color); padding: 2px 6px; border-radius: 4px; }
+        .badge { font-size: 9px; padding: 2px 5px; border-radius: 4px; color: white; font-weight: bold; text-transform: uppercase; }
+        .v6-support { background: #28a745; }
+        .v4-only { background: #6c757d; }
+        .badge-speed { background: #007bff; }
+        .sponsor-name { font-weight: bold; color: var(--text-main); font-size: 14px; }
+        
+        .distancia-badge { background: #d9534f; color: white; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-bottom: 8px; display: inline-block; }
+        
+        .action-area { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+        .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
+        
+        button { border: none; border-radius: 8px; cursor: pointer; padding: 8px 12px; font-size: 11px; font-weight: 600; transition: 0.2s; }
+        .btn-copy { background: #6c757d; color: white; }
+        .btn-link { background: #5bc0de; color: white; } /* Cor azul claro para o link */
+        .btn-add-fav { background: #ffc107; color: #333; }
+        
+        footer { background: var(--footer-bg); padding: 30px 15px; text-align: center; border-top: 1px solid var(--border-color); font-size: 11px; color: var(--text-secondary); }
+        .legal-ookla { margin: 8px 0; font-style: italic; }
+        .disclaimer-multilingual { font-size: 10px; line-height: 1.4; opacity: 0.8; }
+        .loading-text { text-align: center; color: #d9534f; font-weight: bold; margin-bottom: 15px; display: none; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+
+<div id="modalPrivacidade">
+    <div class="modal-content">
+        <h3>🛡️ Privacidade</h3>
+        <p style="font-size: 14px;">Processamos sua localização e favoritos apenas localmente no seu dispositivo.</p>
+        <button class="btn-aceitar" style="background:#d9534f; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;" onclick="aceitarPrivacidade()">Aceitar e Continuar</button>
+    </div>
+</div>
+
+<div class="navbar">
+    <h2>Speedtest Server List</h2>
+    <div class="dropdown">
+        <button class="btn-favs">⭐ Favs (<span id="countFavs">0</span>)</button>
+        <div class="dropdown-content">
+            <div id="listaFavoritos"></div>
+            <button onclick="limparFavoritos()" style="width: 100%; margin-top: 10px; background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px; border-radius: 5px; cursor: pointer;">Limpar Tudo</button>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <input type="text" id="campoBusca" inputmode="search" placeholder="Cidade, provedor ou ID...">
+    <div id="loading" class="loading-text">Buscando servidores...</div>
+    <div id="resultados" class="results"></div>
+</div>
+
+<footer>
+    <p>NPW © 2025 by Allan Mansano | <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" style="color:#d9534f; text-decoration:none;">CC BY-NC-ND 4.0</a></p>
+    <div class="legal-ookla">Ookla®, Speedtest®, and Speedtest Intelligence® are trademarks of Ookla, LLC</div>
+    <div class="disclaimer-multilingual">
+        Sem vínculo com Ookla. | No affiliation with Ookla. | Не связано с Ookla.
+    </div>
+</footer>
+
+<script>
+    window.onload = function() {
+        if (!localStorage.getItem('privacidadeAceita')) {
+            document.getElementById('modalPrivacidade').style.display = 'flex';
+        }
+    }
+
+    function aceitarPrivacidade() {
+        localStorage.setItem('privacidadeAceita', 'true');
+        document.getElementById('modalPrivacidade').style.display = 'none';
+    }
+
+    const campoBusca = document.getElementById('campoBusca');
+    const containerResultados = document.getElementById('resultados');
+    const loadingText = document.getElementById('loading');
+    const countFavs = document.getElementById('countFavs');
+    let userLat, userLon;
+    let favoritos = JSON.parse(localStorage.getItem('favServers')) || [];
+
+    navigator.geolocation.getCurrentPosition(pos => { userLat = pos.coords.latitude; userLon = pos.coords.longitude; }, null, {enableHighAccuracy: false});
+    renderizarFavoritos();
+
+    function detectarVelocidade(sponsor, host) {
+        const texto = (sponsor + " " + host).toLowerCase();
+        const match = texto.match(/(\d+)\s?(gbps|gb|g|10g|40g|100g)/);
+        if (match) {
+            let valor = match[1];
+            if (valor === "10" || texto.includes("10g")) return "10G";
+            if (valor === "40") return "40G";
+            if (valor === "100") return "100G";
+            if (valor === "1") return "1G";
+            return valor + "G";
+        }
+        return null;
+    }
+
+    async function buscarNaAPI(termo) {
+        if (termo.length < 2) { containerResultados.innerHTML = ''; loadingText.style.display = 'none'; return; }
+        loadingText.style.display = 'block';
+        try {
+            const api = `https://www.speedtest.net/api/js/servers?engine=js&search=${encodeURIComponent(termo)}&limit=15`;
+            const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(api)}`;
+            const resp = await fetch(url);
+            const dados = await resp.json();
+            
+            const processados = dados.map(s => ({
+                ...s,
+                speed: detectarVelocidade(s.sponsor, s.host),
+                isV6: s.https_functional === 1 || s.host.includes('.ooklaserver.net'),
+                distance: calcularKm(userLat, userLon, parseFloat(s.lat), parseFloat(s.lon)) || s.distance
+            })).sort((a,b) => a.distance - b.distance);
+
+            renderizarResultados(processados);
+        } catch (e) { console.error(e); } finally { loadingText.style.display = 'none'; }
+    }
+
+    function renderizarResultados(lista) {
+        containerResultados.innerHTML = lista.map(srv => {
+            const jaEhFavorito = favoritos.some(f => f.id === srv.id);
+            const speedTag = srv.speed ? `<span class="badge badge-speed">${srv.speed}</span>` : '';
+            return `
+                <div class="item">
+                    <div style="flex:1">
+                        <div class="server-header">
+                            <span class="server-id">ID: ${srv.id}</span>
+                            <span class="badge ${srv.isV6 ? 'v6-support' : 'v4-only'}">${srv.isV6 ? 'v6' : 'v4'}</span>
+                            ${speedTag}
+                            <strong>${srv.name}</strong>
+                        </div>
+                        <div class="sponsor-name">${srv.sponsor}</div>
+                    </div>
+                    <div class="action-area">
+                        <span class="distancia-badge">${srv.distance} km</span>
+                        <div class="btn-group">
+                            <button class="btn-copy" onclick="copiarTexto(this, '${srv.id}')">ID</button>
+                            <button class="btn-link" onclick="copiarTexto(this, 'https://www.speedtest.net/server/${srv.id}')">Link</button>
+                            <button class="btn-add-fav" onclick="adicionarFavorito('${srv.id}', '${srv.name}')" ${jaEhFavorito ? 'disabled' : ''}>${jaEhFavorito ? 'Salvo' : '⭐'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function calcularKm(lat1, lon1, lat2, lon2) {
+        if (!lat1 || !lon1) return null;
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2)**2;
+        return Math.round(R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))));
+    }
+
+    async function copiarTexto(btn, texto) {
+        await navigator.clipboard.writeText(texto);
+        const oldText = btn.innerText; btn.innerText = "Copiado!";
+        setTimeout(() => btn.innerText = oldText, 1000);
+    }
+
+    function adicionarFavorito(id, nome) {
+        if (!favoritos.find(f => f.id === id)) {
+            favoritos.push({ id, nome });
+            localStorage.setItem('favServers', JSON.stringify(favoritos));
+            renderizarFavoritos();
+            buscarNaAPI(campoBusca.value);
+        }
+    }
+
+    function renderizarFavoritos() {
+        countFavs.innerText = favoritos.length;
+        document.getElementById('listaFavoritos').innerHTML = favoritos.length ? favoritos.map(f => `
+            <div style="display:flex; justify-content:space-between; padding:12px 8px; border-bottom:1px solid var(--border-color); font-size:13px; color:var(--text-main); align-items:center;">
+                <span><strong>${f.id}</strong> - ${f.nome}</span>
+                <button onclick="removerFavorito('${f.id}')" style="background:#ff4d4d; color:white; border:none; padding:5px 10px; border-radius:6px; min-width:auto; cursor: pointer;">X</button>
+            </div>
+        `).join('') : '<p style="text-align:center; color:#aaa; padding:10px;">Vazio</p>';
+    }
+
+    function removerFavorito(id) {
+        favoritos = favoritos.filter(f => f.id !== id);
+        localStorage.setItem('favServers', JSON.stringify(favoritos));
+        renderizarFavoritos();
+        if(campoBusca.value) buscarNaAPI(campoBusca.value);
+    }
+
+    function limparFavoritos() {
+        if(confirm("Limpar favoritos?")) { favoritos = []; localStorage.setItem('favServers', JSON.stringify([])); renderizarFavoritos(); if(campoBusca.value) buscarNaAPI(campoBusca.value); }
+    }
+
+    let timer;
+    campoBusca.addEventListener('input', e => {
+        clearTimeout(timer);
+        timer = setTimeout(() => buscarNaAPI(e.target.value), 400);
+    });
+</script>
+</body>
+</html>
